@@ -26,38 +26,78 @@ if(isset($_POST['register'])) {
     $anakKe = $_POST['anak_ke'];
     $tanggunganKeluarga = $_POST['tanggungan_keluarga'];
     $namaAyah = $_POST['nama_ayah'];
-    $nikAyah = $_POST ['nik_ayah'];
+    $nikAyah = $_POST['nik_ayah'];
     $jobAyah = $_POST['pekerjaan_ayah'];
     $salaryAyah = $_POST['penghasilan_ayah'];
     $namaIbu = $_POST['nama_ibu'];
-    $nikIbu = $_POST ['nik_ibu'];
+    $nikIbu = $_POST['nik_ibu'];
     $jobIbu = $_POST['pekerjaan_ibu'];
     $salaryIbu = $_POST['penghasilan_ibu'];
     $alamatOrtu = $_POST['alamat_ortu'];
     $telpOrtu = $_POST['no_telp_ortu'];
     $namaWali = $_POST['nama_wali'];
-    $nikWali = $_POST ['nik_wali'];
+    $nikWali = $_POST['nik_wali'];
     $jobWali = $_POST['pekerjaan_wali'];
     $salaryWali = $_POST['penghasilan_wali'];
     $alamatWali = $_POST['alamat_wali'];
     $telpWali = $_POST['no_telp_wali'];
 
+    $query = "INSERT INTO input_data (program, nama_siswa, kelamin, agama, nisn, nis, tempat_lahir, tanggal_lahir, alamat, kota, telp, email, nik, no_kk, golongan_darah, berat_badan, lingkar_kepala, jarak_rumah, asal_sekolah, no_skhu, status_di_keluarga, anak_ke, tanggungan_keluarga, nama_ayah, nik_ayah, pekerjaan_ayah, penghasilan_ayah, nama_ibu, nik_ibu, pekerjaan_ibu, penghasilan_ibu, alamat_ortu, no_telp_ortu, nama_wali, nik_wali, pekerjaan_wali, penghasilan_wali, alamat_wali, no_telp_wali)
+    VALUES (:program, :nama, :kelamin, :agama, :nisn, :nis, :tmpLahir, :tglLahir, :alamat, :kota, :telp, :email, :nik, :kk, :golDar, :bb, :lingkarKepala, :jarakRumah, :asalSekolah, :skhu, :status, :anakKe, :tanggunganKeluarga, :namaAyah, :nikAyah, :jobAyah, :salaryAyah, :namaIbu, :nikIbu, :jobIbu, :salaryIbu, :alamatOrtu, :telpOrtu, :namaWali, :nikWali, :jobWali, :salaryWali, :alamatWali, :telpWali)";
 
-    $result = mysqli_query($conn, "INSERT INTO input_data (program, nama_siswa, kelamin, agama, nisn, nis, tempat_lahir, tanggal_lahir, alamat, kota, telp, email, nik, no_kk, golongan_darah, berat_badan, lingkar_kepala, jarak_rumah, asal_sekolah, no_skhu, status_di_keluarga, anak_ke, tanggungan_keluarga, nama_ayah, nik_ayah, pekerjaan_ayah, penghasilan_ayah, nama_ibu, nik_ibu, pekerjaan_ibu, penghasilan_ibu, alamat_ortu, no_telp_ortu, nama_wali, nik_wali, pekerjaan_wali, penghasilan_wali, alamat_wali, no_telp_wali) 
-    VALUES ('$program', '$nama', '$kelamin', '$agama', '$nisn', '$nis', '$tmpLahir', '$tglLahir', '$alamat', '$kota', '$telp', '$email', '$nik', '$kk', '$golDar', '$bb', '$lingkarKepala', '$jarakRumah', '$asalSekolah', '$skhu', '$status', '$anakKe', '$tanggunganKeluarga', '$namaAyah', '$nikAyah', '$jobAyah', '$salaryAyah', '$namaIbu', '$nikIbu', '$jobIbu', '$salaryIbu', '$alamatOrtu', '$telpOrtu', '$namaWali', '$nikWali', '$jobWali', '$salaryWali', '$alamatWali', '$telpWali')");
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':program', $program);
+    $stmt->bindParam(':nama', $nama);
+    $stmt->bindParam(':kelamin', $kelamin);
+    $stmt->bindParam(':agama', $agama);
+    $stmt->bindParam(':nisn', $nisn);
+    $stmt->bindParam(':nis', $nis);
+    $stmt->bindParam(':tmpLahir', $tmpLahir);
+    $stmt->bindParam(':tglLahir', $tglLahir);
+    $stmt->bindParam(':alamat', $alamat);
+    $stmt->bindParam(':kota', $kota);
+    $stmt->bindParam(':telp', $telp);
+    $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':nik', $nik);
+    $stmt->bindParam(':kk', $kk);
+    $stmt->bindParam(':golDar', $golDar);
+    $stmt->bindParam(':bb', $bb);
+    $stmt->bindParam(':lingkarKepala', $lingkarKepala);
+    $stmt->bindParam(':jarakRumah', $jarakRumah);
+    $stmt->bindParam(':asalSekolah', $asalSekolah);
+    $stmt->bindParam(':skhu', $skhu);
+    $stmt->bindParam(':status', $status);
+    $stmt->bindParam(':anakKe', $anakKe);
+    $stmt->bindParam(':tanggunganKeluarga', $tanggunganKeluarga);
+    $stmt->bindParam(':namaAyah', $namaAyah);
+    $stmt->bindParam(':nikAyah', $nikAyah);
+    $stmt->bindParam(':jobAyah', $jobAyah);
+    $stmt->bindParam(':salaryAyah', $salaryAyah);
+    $stmt->bindParam(':namaIbu', $namaIbu);
+    $stmt->bindParam(':nikIbu', $nikIbu);
+    $stmt->bindParam(':jobIbu', $jobIbu);
+    $stmt->bindParam(':salaryIbu', $salaryIbu);
+    $stmt->bindParam(':alamatOrtu', $alamatOrtu);
+    $stmt->bindParam(':telpOrtu', $telpOrtu);
+    $stmt->bindParam(':namaWali', $namaWali);
+    $stmt->bindParam(':nikWali', $nikWali);
+    $stmt->bindParam(':jobWali', $jobWali);
+    $stmt->bindParam(':salaryWali', $salaryWali);
+    $stmt->bindParam(':alamatWali', $alamatWali);
+    $stmt->bindParam(':telpWali', $telpWali);
 
-    if(isset($result)) {
+    if ($stmt->execute()) {
         echo "<div>Data recorded</div>";
         header("location: index.php");
+        exit; // Pastikan untuk menghentikan eksekusi setelah pengalihan
     } else {
         echo "<div>Failed</div>";
     }
-
 }
 
 // HANDLE SHOW DATA
 $show = "SELECT * FROM input_data ORDER BY no ASC";
-$result = $conn->query($show);
+$result = $pdo->query($show);
 ?>
 
 <!DOCTYPE html>
@@ -217,7 +257,7 @@ $result = $conn->query($show);
             <input type="submit" name="register" id="register" value="Daftar">
         </form>
 
-        <form action="download.php?no=<?php htmlspecialchars($row['no']) ?>" method="post">
+        <form action="download.php?no=<?php echo $row['no']; ?>" method="post">
             <button type="submit">Download PDF</button>
         </form>
     </div>
@@ -272,8 +312,8 @@ $result = $conn->query($show);
             </thead>
             <tbody>
                 <?php
-                    if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
+                    if ($result->rowCount() > 0) {
+                        foreach ($result as $row) {
                 ?>
                 <tr>
                     <td><?php echo $row['no']; ?></td>
