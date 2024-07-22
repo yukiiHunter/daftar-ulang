@@ -1,7 +1,22 @@
 <?php
 include 'connect.php';
+require 'vendor/autoload.php';
+session_start();
+
+use Google\Client;
+use Google\Service\Drive;
+use Google\Service\Drive\DriveFile;
 
 if(isset($_POST['register'])) {
+
+    // Connect To Google Drive
+    $client = new Client();
+    $client->setAuthConfig('./assets/credential.json');
+    $client->setRedirectUri('http://localhost:8080/daftar_ulang3/index.php');
+    $client->addScope(Drive::DRIVE_FILE);
+
+    $folderId = '1dWHhp18UQ5GgM1iXLbVYoltqyBI51b3X';
+
     $program = $_POST['program'];
     $nama = $_POST['nama_siswa'];
     $kelamin = $_POST['kelamin'];
@@ -42,8 +57,55 @@ if(isset($_POST['register'])) {
     $alamatWali = $_POST['alamat_wali'];
     $telpWali = $_POST['no_telp_wali'];
 
-    $query = "INSERT INTO input_data (program, nama_siswa, kelamin, agama, nisn, nis, tempat_lahir, tanggal_lahir, alamat, kota, telp, email, nik, no_kk, golongan_darah, berat_badan, lingkar_kepala, jarak_rumah, asal_sekolah, no_skhu, status_di_keluarga, anak_ke, tanggungan_keluarga, nama_ayah, nik_ayah, pekerjaan_ayah, penghasilan_ayah, nama_ibu, nik_ibu, pekerjaan_ibu, penghasilan_ibu, alamat_ortu, no_telp_ortu, nama_wali, nik_wali, pekerjaan_wali, penghasilan_wali, alamat_wali, no_telp_wali)
-    VALUES (:program, :nama, :kelamin, :agama, :nisn, :nis, :tmpLahir, :tglLahir, :alamat, :kota, :telp, :email, :nik, :kk, :golDar, :bb, :lingkarKepala, :jarakRumah, :asalSekolah, :skhu, :status, :anakKe, :tanggunganKeluarga, :namaAyah, :nikAyah, :jobAyah, :salaryAyah, :namaIbu, :nikIbu, :jobIbu, :salaryIbu, :alamatOrtu, :telpOrtu, :namaWali, :nikWali, :jobWali, :salaryWali, :alamatWali, :telpWali)";
+    // Upload File to Google Drive
+    if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
+        $client->setAccessToken($_SESSION['access_token']);
+    
+        // Buat Layanan Drive
+        $service = new Drive($client);
+    
+        $folderId = '1dWHhp18UQ5GgM1iXLbVYoltqyBI51b3X';
+        
+        // Upload File
+        if (isset($_FILES['fileKK']) && $_FILES['fileKK']['error'] == UPLOAD_ERR_OK) {
+            $file = $_FILES['fileKK'];
+            $fileMetadata = new DriveFile(array(
+                'name' => $file['name'],
+                'parents' => array($folderId)
+            ));
+            $content = file_get_contents($file['tmp_name']);
+            $uploadedFile = $service->files->create($fileMetadata, array(
+                'data' => $content,
+                'mimeType' => $file['type'],
+                'uploadType' => 'multipart',
+                'fields' => 'id'
+            ));
+    
+            $fileId = $uploadedFile->id;
+            $fileKK = "https://drive.google.com/file/d/$fileId/view";
+            
+            echo "File uploaded successfully. File URL: $fileKK";
+        } else {
+            echo "File upload failed.";
+        }
+    
+    } else {
+        // Belum ada token akses, arahkan pengguna ke URL otorisasi
+        if (!isset($_GET['code'])) {
+            $authUrl = $client->createAuthUrl();
+            header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
+            exit();
+        } else {
+            // Tukar kode otorisasi dengan token akses
+            $client->authenticate($_GET['code']);
+            $_SESSION['access_token'] = $client->getAccessToken();
+            header('Location: ' . filter_var($_SERVER['PHP_SELF'], FILTER_SANITIZE_URL));
+            exit();
+        }
+    }
+
+    $query = "INSERT INTO input_data (program, nama_siswa, kelamin, agama, nisn, nis, tempat_lahir, tanggal_lahir, alamat, kota, telp, email, nik, no_kk, golongan_darah, berat_badan, lingkar_kepala, jarak_rumah, asal_sekolah, no_skhu, status_di_keluarga, anak_ke, tanggungan_keluarga, nama_ayah, nik_ayah, pekerjaan_ayah, penghasilan_ayah, nama_ibu, nik_ibu, pekerjaan_ibu, penghasilan_ibu, alamat_ortu, no_telp_ortu, nama_wali, nik_wali, pekerjaan_wali, penghasilan_wali, alamat_wali, no_telp_wali, fileKK)
+    VALUES (:program, :nama, :kelamin, :agama, :nisn, :nis, :tmpLahir, :tglLahir, :alamat, :kota, :telp, :email, :nik, :kk, :golDar, :bb, :lingkarKepala, :jarakRumah, :asalSekolah, :skhu, :status, :anakKe, :tanggunganKeluarga, :namaAyah, :nikAyah, :jobAyah, :salaryAyah, :namaIbu, :nikIbu, :jobIbu, :salaryIbu, :alamatOrtu, :telpOrtu, :namaWali, :nikWali, :jobWali, :salaryWali, :alamatWali, :telpWali, :fileKK)";
 
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':program', $program);
@@ -85,6 +147,7 @@ if(isset($_POST['register'])) {
     $stmt->bindParam(':salaryWali', $salaryWali);
     $stmt->bindParam(':alamatWali', $alamatWali);
     $stmt->bindParam(':telpWali', $telpWali);
+    $stmt->bindParam(':fileKK', $fileKK);
 
     if ($stmt->execute()) {
         echo "<div>Data recorded</div>";
@@ -98,6 +161,7 @@ if(isset($_POST['register'])) {
 // HANDLE SHOW DATA
 $show = "SELECT * FROM input_data ORDER BY no ASC";
 $result = $pdo->query($show);
+
 ?>
 
 <!DOCTYPE html>
@@ -109,13 +173,13 @@ $result = $pdo->query($show);
     <link rel="stylesheet" href="assets/css/index.css">
 </head>
 <body>
-    <div class="title">Daftar Ulang</div>
     
     <div class="inputData">
-        <form action="index.php" method="post" class="input">
+        <div class="title">Daftar Ulang</div>
+        <form action="index.php" method="post" class="input" enctype="multipart/form-data">
             <!-- Pemilihan Jurusan -->
             <select name="program" id="program" required>
-                <option value="">------------------ Pilih Program Keahlian -------------------</option>
+                <option value="">Pilih Program Keahlian</option>
                 <option value="KPBS">Konstruksi dan Perawatan Bangunan Sipil (KPBS)</option>
                 <option value="TKP">Teknik Konstruksi dan Perumahan (TKP)</option>
                 <option value="TKL">Teknik Ketenagalistrikan (TKL)</option>
@@ -130,14 +194,14 @@ $result = $pdo->query($show);
 
             <!-- Input Kelamin -->
             <select name="kelamin" id="kelamin" required>
-                <option value="">---- Pilih Jenis Kelamin ----</option>
+                <option value="">Pilih Jenis Kelamin</option>
                 <option value="laki laki">Laki laki</option>
                 <option value="perempuan">Perempuan</option>
             </select>
 
             <!-- Input Agama -->
             <select name="agama" id="agama" required>
-                <option value="">---- Pilih Agama ----</option>
+                <option value="">Pilih Agama</option>
                 <option value="Islam">Islam</option>
                 <option value="Kristen">Kristen</option>
                 <option value="Katholik">Katholik</option>
@@ -174,7 +238,7 @@ $result = $pdo->query($show);
             
             <!-- Input Golongan Darah -->
             <select name="golongan_darah" id="golonganDarah" required>
-                <option value="">---- Pilih Golongan Darah ----</option>
+                <option value="">Pilih Golongan Darah</option>
                 <option value="A">A</option>
                 <option value="B">B</option>
                 <option value="O">O</option>
@@ -253,13 +317,13 @@ $result = $pdo->query($show);
             <!-- Input No Telp Wali -->
             <input type="number" name="no_telp_wali" id="telpWali" placeholder="No Telepon Wali" >
 
+            <!-- Upload KK -->
+             <input type="file" name="fileKK" id="file">
+
             <!-- SUBMIT BUTTON -->
             <input type="submit" name="register" id="register" value="Daftar">
         </form>
-
-        <form action="download.php?no=<?php echo $row['no']; ?>" method="post">
-            <button type="submit">Download PDF</button>
-        </form>
+        
     </div>
 
     <div class="showData">
@@ -307,14 +371,12 @@ $result = $pdo->query($show);
                     <th>Penghasilan Wali</th>
                     <th>Alamat Wali</th>
                     <th>No Telepon Wali</th>
+                    <th>File KK</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                <?php
-                    if ($result->rowCount() > 0) {
-                        foreach ($result as $row) {
-                ?>
+                <?php while ($row = $result->fetch(PDO::FETCH_ASSOC)) { ?>
                 <tr>
                     <td><?php echo $row['no']; ?></td>
                     <td><?php echo $row['program'];?></td>
@@ -356,17 +418,12 @@ $result = $pdo->query($show);
                     <td><?php echo $row['penghasilan_wali'];?></td>
                     <td><?php echo $row['alamat_wali'];?></td>
                     <td><?php echo $row['no_telp_wali'];?></td>
+                    <td><a href="<?php echo $row['fileKK']; ?>" target="_blank">View</a></td>
                     <td>
                         <a href="download.php?no=<?php echo $row['no']; ?>">Download</a>
                     </td>
                 </tr>
-                <?php 
-                    };
-        
-                } else {
-                    echo "<tr><td colspan='43'>No records found</td></tr>";
-                } 
-                ?>
+                <?php } ?>
             </tbody>
         </table>
     </div>
