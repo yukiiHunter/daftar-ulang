@@ -3,20 +3,7 @@ include 'connect.php';
 require 'vendor/autoload.php';
 session_start();
 
-use Google\Client;
-use Google\Service\Drive;
-use Google\Service\Drive\DriveFile;
-
 if(isset($_POST['register'])) {
-
-    // Connect To Google Drive
-    $client = new Client();
-    $client->setAuthConfig('./assets/credential.json');
-    $client->setRedirectUri('http://localhost:8080/daftar_ulang3/index.php');
-    $client->addScope(Drive::DRIVE_FILE);
-
-    $folderId = '1dWHhp18UQ5GgM1iXLbVYoltqyBI51b3X';
-
     $program = $_POST['program'];
     $nama = $_POST['nama_siswa'];
     $kelamin = $_POST['kelamin'];
@@ -56,56 +43,54 @@ if(isset($_POST['register'])) {
     $salaryWali = $_POST['penghasilan_wali'];
     $alamatWali = $_POST['alamat_wali'];
     $telpWali = $_POST['no_telp_wali'];
+    $noKIP = $_POST['no_kip'];
 
-    // Upload File to Google Drive
-    if (isset($_SESSION['access_token']) && $_SESSION['access_token']) {
-        $client->setAccessToken($_SESSION['access_token']);
-    
-        // Buat Layanan Drive
-        $service = new Drive($client);
-    
-        $folderId = '1dWHhp18UQ5GgM1iXLbVYoltqyBI51b3X';
-        
-        // Upload File
-        if (isset($_FILES['fileKK']) && $_FILES['fileKK']['error'] == UPLOAD_ERR_OK) {
-            $file = $_FILES['fileKK'];
-            $fileMetadata = new DriveFile(array(
-                'name' => $file['name'],
-                'parents' => array($folderId)
-            ));
-            $content = file_get_contents($file['tmp_name']);
-            $uploadedFile = $service->files->create($fileMetadata, array(
-                'data' => $content,
-                'mimeType' => $file['type'],
-                'uploadType' => 'multipart',
-                'fields' => 'id'
-            ));
-    
-            $fileId = $uploadedFile->id;
-            $fileKK = "https://drive.google.com/file/d/$fileId/view";
-            
-            echo "File uploaded successfully. File URL: $fileKK";
+    // File Handler KK
+    if (isset($_FILES['fileKK']) && $_FILES['fileKK']['error'] == UPLOAD_ERR_OK) {
+        $uploadDir = 'file_input/kartu_keluarga/';
+        $fileName = basename($_FILES['fileKK']['name']);
+        $filePath = $uploadDir . $fileName;
+
+        if (move_uploaded_file($_FILES['fileKK']['tmp_name'], $filePath)) {
+            $fileKK = $filePath;
+            echo 'File KK berhasil terkirim';
         } else {
-            echo "File upload failed.";
+            echo 'File KK gagal terkirim';
         }
-    
     } else {
-        // Belum ada token akses, arahkan pengguna ke URL otorisasi
-        if (!isset($_GET['code'])) {
-            $authUrl = $client->createAuthUrl();
-            header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
-            exit();
+        echo 'Tidak ada file terkirim';
+    }
+
+    // File Handler SKL
+    if (isset($_FILES['fileSKL']) && $_FILES['fileSKL']['error'] == UPLOAD_ERR_OK) {
+        $uploadDir = 'file_input/surat_keterangan_lulus/';
+        $fileName = basename($_FILES['fileSKL']['name']);
+        $filePath = $uploadDir . $fileName;
+
+        if (move_uploaded_file($_FILES['fileSKL']['tmp_name'], $filePath)) {
+            $fileSKL = $filePath;
+            echo 'File SKL berhasil terkirim';
         } else {
-            // Tukar kode otorisasi dengan token akses
-            $client->authenticate($_GET['code']);
-            $_SESSION['access_token'] = $client->getAccessToken();
-            header('Location: ' . filter_var($_SERVER['PHP_SELF'], FILTER_SANITIZE_URL));
-            exit();
+            echo 'File SKL gagal terkirim';
         }
     }
 
-    $query = "INSERT INTO input_data (program, nama_siswa, kelamin, agama, nisn, nis, tempat_lahir, tanggal_lahir, alamat, kota, telp, email, nik, no_kk, golongan_darah, berat_badan, lingkar_kepala, jarak_rumah, asal_sekolah, no_skhu, status_di_keluarga, anak_ke, tanggungan_keluarga, nama_ayah, nik_ayah, pekerjaan_ayah, penghasilan_ayah, nama_ibu, nik_ibu, pekerjaan_ibu, penghasilan_ibu, alamat_ortu, no_telp_ortu, nama_wali, nik_wali, pekerjaan_wali, penghasilan_wali, alamat_wali, no_telp_wali, fileKK)
-    VALUES (:program, :nama, :kelamin, :agama, :nisn, :nis, :tmpLahir, :tglLahir, :alamat, :kota, :telp, :email, :nik, :kk, :golDar, :bb, :lingkarKepala, :jarakRumah, :asalSekolah, :skhu, :status, :anakKe, :tanggunganKeluarga, :namaAyah, :nikAyah, :jobAyah, :salaryAyah, :namaIbu, :nikIbu, :jobIbu, :salaryIbu, :alamatOrtu, :telpOrtu, :namaWali, :nikWali, :jobWali, :salaryWali, :alamatWali, :telpWali, :fileKK)";
+    // File Handler SKL
+    if (isset($_FILES['fileKIP']) && $_FILES['fileKIP']['error'] == UPLOAD_ERR_OK) {
+        $uploadDir = 'file_input/kartu_indonesia_pintar/';
+        $fileName = basename($_FILES['fileKIP']['name']);
+        $filePath = $uploadDir . $fileName;
+
+        if (move_uploaded_file($_FILES['fileKIP']['tmp_name'], $filePath)) {
+            $fileKIP = $filePath;
+            echo 'File KIP berhasil terkirim';
+        } else {
+            echo 'File KIP gagal terkirim';
+        }
+    }
+
+    $query = "INSERT INTO input_data (program, nama_siswa, kelamin, agama, nisn, nis, tempat_lahir, tanggal_lahir, alamat, kota, telp, email, nik, no_kk, golongan_darah, berat_badan, lingkar_kepala, jarak_rumah, asal_sekolah, no_skhu, status_di_keluarga, anak_ke, tanggungan_keluarga, nama_ayah, nik_ayah, pekerjaan_ayah, penghasilan_ayah, nama_ibu, nik_ibu, pekerjaan_ibu, penghasilan_ibu, alamat_ortu, no_telp_ortu, nama_wali, nik_wali, pekerjaan_wali, penghasilan_wali, alamat_wali, no_telp_wali, file_kk, file_skl, no_kip, file_kip)
+    VALUES (:program, :nama, :kelamin, :agama, :nisn, :nis, :tmpLahir, :tglLahir, :alamat, :kota, :telp, :email, :nik, :kk, :golDar, :bb, :lingkarKepala, :jarakRumah, :asalSekolah, :skhu, :status, :anakKe, :tanggunganKeluarga, :namaAyah, :nikAyah, :jobAyah, :salaryAyah, :namaIbu, :nikIbu, :jobIbu, :salaryIbu, :alamatOrtu, :telpOrtu, :namaWali, :nikWali, :jobWali, :salaryWali, :alamatWali, :telpWali, :fileKK, :fileSKL, :noKIP, :fileKIP)";
 
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':program', $program);
@@ -148,6 +133,9 @@ if(isset($_POST['register'])) {
     $stmt->bindParam(':alamatWali', $alamatWali);
     $stmt->bindParam(':telpWali', $telpWali);
     $stmt->bindParam(':fileKK', $fileKK);
+    $stmt->bindParam(':fileSKL', $fileSKL);
+    $stmt->bindParam(':noKIP', $noKIP);
+    $stmt->bindParam(':fileKIP', $fileKIP);
 
     if ($stmt->execute()) {
         echo "<div>Data recorded</div>";
@@ -159,7 +147,7 @@ if(isset($_POST['register'])) {
 }
 
 // HANDLE SHOW DATA
-$show = "SELECT * FROM input_data ORDER BY no ASC";
+$show = "SELECT * FROM input_data ORDER BY program, nama_siswa ASC";
 $result = $pdo->query($show);
 
 ?>
@@ -318,7 +306,16 @@ $result = $pdo->query($show);
             <input type="number" name="no_telp_wali" id="telpWali" placeholder="No Telepon Wali" >
 
             <!-- Upload KK -->
-             <input type="file" name="fileKK" id="file">
+            <input type="file" name="fileKK" id="fileKK">
+
+            <!-- Upload SKL -->
+            <input type="file" name="fileSKL" id="fileSKL">
+
+            <!-- Input No KIP -->
+             <input type="text" name="no_kip" id="kip" placeholder="No KIP">
+
+            <!-- Upload KIP -->
+            <input type="file" name="fileKIP" id="fileKIP" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" maxlength="16">
 
             <!-- SUBMIT BUTTON -->
             <input type="submit" name="register" id="register" value="Daftar">
@@ -326,8 +323,8 @@ $result = $pdo->query($show);
         
     </div>
 
+    <a href="export_excel.php">Export</a>
     <div class="showData">
-        <a href="export_excel.php">Export</a>
         <table class="data">
             <thead>
                 <tr>
@@ -418,7 +415,7 @@ $result = $pdo->query($show);
                     <td><?php echo $row['penghasilan_wali'];?></td>
                     <td><?php echo $row['alamat_wali'];?></td>
                     <td><?php echo $row['no_telp_wali'];?></td>
-                    <td><a href="<?php echo $row['fileKK']; ?>" target="_blank">View</a></td>
+                    <td><a href=" . htmlspecialchars($row['fileKK']) . " target="_blank">View</a></td>
                     <td>
                         <a href="download.php?no=<?php echo $row['no']; ?>">Download</a>
                     </td>
